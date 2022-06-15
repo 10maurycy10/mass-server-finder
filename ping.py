@@ -27,7 +27,8 @@ async def ping(ip, port):
         status = await JavaServer(host=ip, port=port).async_status()
         return (ip,status.raw, 0)
     except Exception as e:
-        return (ip,"\"Erroring\"", 1)
+        return (ip,'\"Erroring\"',1)
+
 
 
 async def mass_ping(ips):
@@ -36,17 +37,35 @@ async def mass_ping(ips):
     ])
 
 async def mass_ping_insert(ips):
-    for (ip, ping, error) in tqdm.tqdm(await mass_ping(ips)):
+    for (ip, ping, error) in await mass_ping(ips):
             dbc = db.cursor()
-            dbc.execute("insert into rawpings values (?, ?, ?, ?);", (json.dumps(ping), ip, error, int(time.time())))
-            dbc.execute("update ips set lastping=? where ip=?;", (int(time.time()),ip))
+#            dbc.execute("insert into rawpings values (?, ?, ?, ?);", (json.dumps(ping), ip, error, int(time.time())))
+#            dbc.execute("update ips set lastping=? where ip=?;", (int(time.time()),ip))
     db.commit()
 
-while True:
-    recheck_time = time.time() - config["recheck_interval"];
-    dbc = db.cursor()
-    dbc.execute("select ip from ips where lastping<? or lastping is null limit 1000;", (recheck_time,));
-    ips = [ip[0] for ip in dbc]
-    if len(ips) == 0:
-        break
-    asyncio.run(mass_ping_insert(ips))
+import logging
+logging.getLogger('asyncio').setLevel(logging.CRITICAL)
+
+dbc = db.cursor()
+dbc.execute("select ip from ips where lastping is null;");
+ips = [ip[0] for ip in dbc]
+ipblocks = list(batch(ips, n=1000));
+
+print("pinging new ips")
+
+for ipbatch in tqdm.tqdm(ipblocks):
+    asyncio.run(mass_ping_insert(ipbatch))
+    
+
+recheck_time = time.time() - config["recheck_interval"];    
+dbc = db.cursor()
+dbc.execute("select ip from ips where lastping<?;", (recheck_time,));
+ips = [ip[0] for ip in dbc]
+ipblocks = list(batch(ips, n=1000));
+
+print("repinging old ips")
+
+for ipbatch in tqdm.tqdm(ipblocks):
+    asyncio.run(mass_ping_insert(ipbatch))
+
+  

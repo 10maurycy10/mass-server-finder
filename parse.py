@@ -20,7 +20,7 @@ dbc = db.cursor()
 dbc.execute("select ip,data,timestamp from rawpings where error=0 and not (ip, timestamp) in (select ip,timestamp from servers);");
 raw = [raw for raw in dbc]
 
-for (ip, data, time) in raw: 
+for (ip, data, time) in tqdm.tqdm(raw): 
     data = json.loads(data)
     name = data.get('description')
     version_obj = data.get('version')
@@ -33,9 +33,10 @@ for (ip, data, time) in raw:
     if players:
         player_online = players.get("online")
         player_cap = players.get("max")
+    modded = "modinfo" in data or "modpackData" in data
 
     dbc = db.cursor()
-    dbc.execute("insert into servers (cap, online, ip, version, name, timestamp) values (?, ?, ?, ?, ?, ?)", (player_cap, player_online, ip, version_name, json.dumps(name), time))
+    dbc.execute("insert into servers (cap, online, ip, version, name, timestamp, modded) values (?, ?, ?, ?, ?, ?, ?)", (player_cap, player_online, ip, version_name, json.dumps(name), time, modded))
 
     if players.get("sample"):
         for player in players.get("sample"):

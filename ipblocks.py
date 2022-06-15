@@ -23,5 +23,6 @@ counts = [get_count(block) for block in tqdm.tqdm(range(256))]
 arr = [i for i in range(256)]
 for (block, count) in enumerate(counts):
     print(block, count)
+plt.yscale("log")
 plt.bar(arr,counts)
 plt.show()
