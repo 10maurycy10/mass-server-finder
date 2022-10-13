@@ -1,0 +1,35 @@
+services:
+  database:
+    environment:
+      # Hardcoding this is fine as the database is not exposed to the network
+      MARIADB_ROOT_PASSWORD: margincarpoolwatervocalize
+      MARIADB_DATABASE: minecraft
+    image: mariadb
+    volumes:
+        - ./init.sql:/docker-entrypoint-initdb.d/setup.sql
+    healthcheck:
+      test: "/usr/bin/mysql minecraft --user=root --password=margincarpoolwatervocalize"
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  # Serves content to discord
+  discord:
+    build: ./discord
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DISCORD_TOKEN: "${DISCORD_TOKEN}"
+  # Send SYN packets to find servers
+  scanner:
+    build: ./scanner
+    depends_on:
+      database:
+        condition: service_healthy
+  # Ping the servers to get info
+  pinger:
+    build: ./pinger
+    depends_on:
+      database:
+        condition: service_healthy

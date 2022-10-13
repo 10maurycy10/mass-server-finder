@@ -1,0 +1,8 @@
+{
+	"db_passwd": "margincarpoolwatervocalize",
+	"db_username": "root",
+	"db_host": "database",
+	"db_port": 3306,
+	"db_dbname": "minecraft",
+	"recheck_interval": 35000
+}

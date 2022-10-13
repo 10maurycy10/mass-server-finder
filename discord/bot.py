@@ -2,6 +2,7 @@ import json
 import discord
 from discord.ext import commands
 import random
+import os
 import mariadb
 import time
 import datetime
@@ -23,9 +24,14 @@ description = '''A frontend for let's minecraft server db.'''
 
 intents = discord.Intents.default()
 intents.members = True
-#intents.message_content = True
+intents.message_content = True
 
 bot = commands.Bot(command_prefix='.', description=description, intents=intents)
+
+def sample(dbc):
+    for i in dbc:
+        return i
+    return None
 
 def truncate(s):
     print("truncating", s)
@@ -108,7 +114,8 @@ async def status(ctx, ip: str):
     """Shows the last seen status of a server."""
     dbc = db.cursor()
     dbc.execute("select timestamp,cap,online,name,modded,version from servers where ip=? order by -timestamp;", (ip,))
-    stats = next(dbc)
+
+    stats = sample(dbc)
     if stats:
         time = datetime.datetime.fromtimestamp(stats[0])
         cap = stats[1]
@@ -118,7 +125,7 @@ async def status(ctx, ip: str):
         version = stats[5]
         print(stats)
         embed = discord.Embed(title=f"__**{ip} Stats as of {time}:**__",timestamp= ctx.message.created_at)
-        embed.add_field(name="Last seen", value=truncate(time))
+        embed.add_field(name="Last seen", value=truncate(str(time)))
         embed.add_field(name="Player cap", value=truncate(str(cap)))
         embed.add_field(name="Players", value=truncate(str(online)))
         embed.add_field(name="Version", value=truncate(version))
@@ -164,7 +171,7 @@ async def rand(ctx):
     print("Random server")
     dbc = db.cursor()
     dbc.execute("select ip,version from servers order by rand() limit 1");
-    server = next(dbc)
+    server = sample(dbc)
     embed = discord.Embed(title=f"__**Random server**__",timestamp= ctx.message.created_at)
     if server:
         embed.add_field(name="ip", value=server[0])
@@ -177,7 +184,7 @@ async def randver(ctx, version: str):
     print("Random server " + version)
     dbc = db.cursor()
     dbc.execute("select ip,version from servers where version like ? order by rand() limit 1", (version + "%",));
-    server = next(dbc)
+    server = sample(dbc)
     embed = discord.Embed(title=f"__**Random server**__",timestamp= ctx.message.created_at)
     if server:
         embed.add_field(name="ip", value=server[0])
@@ -214,4 +221,4 @@ async def ping(ctx, ip: str):
     #    embed.add_field(name="error", value=e)
     await ctx.send(embed=embed)
 
-bot.run(config["token"])
+bot.run(os.environ["DISCORD_TOKEN"])
