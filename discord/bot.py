@@ -110,6 +110,7 @@ async def on_ready():
 
 @bot.command(help="Show the status for a java server ip, cached data.")
 async def status(ctx, ip: str):
+    db.commit()
     print("Status for " + ip)
     """Shows the last seen status of a server."""
     dbc = db.cursor()
@@ -154,6 +155,7 @@ async def wherewas(ctx, username: str):
 
 @bot.command(help="Find a server by searching for a substring in the motd")
 async def inmotd(ctx, substring: str):
+    db.commit()
     print("Searching in motds " + substring)
     dbc = db.cursor()
     dbc.execute("select ip,name from servers where name like ? group by ip limit 50;", ("%" + substring + "%",))
@@ -168,6 +170,7 @@ async def inmotd(ctx, substring: str):
 
 @bot.command(help="Shows a random server ip")
 async def rand(ctx):
+    db.commit()
     print("Random server")
     dbc = db.cursor()
     dbc.execute("select ip,version from servers order by rand() limit 1");
@@ -181,6 +184,7 @@ async def rand(ctx):
 
 @bot.command(help="Shows a random server running a given version")
 async def randver(ctx, version: str):
+    db.commit()
     print("Random server " + version)
     dbc = db.cursor()
     dbc.execute("select ip,version from servers where version like ? order by rand() limit 1", (version + "%",));
@@ -197,6 +201,7 @@ async def randver(ctx, version: str):
 #TODO fix motd formating
 @bot.command(help="Pings a server to get realtime data")
 async def ping(ctx, ip: str):
+    db.commit()
     embed = discord.Embed(title=f"__**Stats for {ip} as of NOW**__",timestamp= ctx.message.created_at)
     if True:
     #try:
